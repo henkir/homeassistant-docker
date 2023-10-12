@@ -1,0 +1,46 @@
+sla_pa_lampor_nere:
+  alias: Slå på lampor nere
+  sequence:
+  - delay:
+      seconds: '{{ range(0, 120) | random | int }}'
+  - service: light.turn_on
+    data: {}
+    target:
+      entity_id: light.kok_hue
+  - delay:
+      seconds: '{{ range(5, 60) | random | int }}'
+  - service: light.turn_on
+    data: {}
+    target:
+      entity_id: light.vardagsrum_hue
+  - delay:
+      seconds: '{{ range(5, 40) | random | int }}'
+  - service: light.turn_on
+    data:
+      color_temp: 428
+      brightness_pct: 40
+    target:
+      entity_id: light.hue_color_2
+  mode: single
+sla_av_lampor_nere:
+  alias: Slå av lampor nere
+  sequence:
+  - delay:
+      seconds: '{{ range(0, 120) | random | int }}'
+  - service: light.turn_off
+    data: {}
+    target:
+      entity_id: light.kok_hue
+  - delay:
+      seconds: '{{ range(5, 60) | random | int }}'
+  - service: light.turn_off
+    data: {}
+    target:
+      entity_id: light.vardagsrum_hue
+  - delay:
+      seconds: '{{ range(5, 40) | random | int }}'
+  - service: light.turn_off
+    data: {}
+    target:
+      entity_id: light.hue_color_2
+  mode: single

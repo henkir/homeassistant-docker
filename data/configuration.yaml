@@ -1,0 +1,52 @@
+
+# Loads default set of integrations. Do not remove.
+default_config:
+
+http:
+  server_port: !secret server_port
+  ssl_certificate: !secret ssl_certificate
+  ssl_key: !secret ssl_key
+
+recorder:
+  db_url: !secret postgres_url
+  
+tellstick:
+  host: localhost
+  # host: telldus
+  port: [50800, 50801]
+  signal_repetitions: 5
+
+sensor:
+  - platform: tellstick
+    temperature_scale: "°C"
+    datatype_mask: 3
+    only_named:
+      - id: 168
+        name: Ute
+      - id: 167
+        name: Inne
+      - id: 151
+        name: Kyl
+      - id: 135
+        name: Frys
+  - platform: time_date
+    display_options:
+      - 'time'
+  
+# Load frontend themes from the themes folder
+frontend:
+  themes: !include_dir_merge_named themes
+
+automation: !include automations.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml
+
+homeassistant:
+  packages: !include_dir_named packages/
+
+notify:
+  - platform: html5
+    name: notifier
+    vapid_pub_key: !secret vapid_pub_key
+    vapid_prv_key: !secret vapid_prv_key
+    vapid_email: !secret vapid_email

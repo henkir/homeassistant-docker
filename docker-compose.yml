@@ -1,0 +1,90 @@
+---
+version: '3'
+services:
+  homeassistant:
+    image: ghcr.io/home-assistant/home-assistant:stable
+    container_name: homeassistant
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Stockholm
+    network_mode: host
+    volumes:
+      - /home/henkeadm/docker/homeassistant/data:/config
+      - /dev:/dev
+      - /etc/letsencrypt/live/henkir.se/fullchain.pem:/etc/fullchain.pem:ro
+      - /etc/letsencrypt/live/henkir.se/privkey.pem:/etc/privkey.pem:ro
+    restart: unless-stopped
+    # entrypoint: /bin/bash
+    # command: ["-c", "while : ; do netstat -ltnp | grep LISTEN | grep 50800 >/dev/null; [ $? -ne 0 ] || break; echo 'Waiting for telldus'; sleep 1; done; python -m homeassistant --config /config"]
+    # ports:
+    #   - "21054:21054"
+    depends_on:
+      - zwavejs2mqtt
+      - telldus
+      - postgres
+    # links:
+    #   - "telldus"
+    #   - "postgres"
+    #   - "zwavejs2mqtt"
+---
+version: '3.7'
+services:
+  zwavejs2mqtt:
+    container_name: zwavejs2mqtt
+    image: zwavejs/zwavejs2mqtt:latest
+    restart: always
+    tty: true
+    stop_signal: SIGINT
+    environment:
+      - SESSION_SECRET=/run/secrets/zwavejs_secret
+      - ZWAVEJS_EXTERNAL_CONFIG=/usr/src/app/store/.config-db
+      - TZ=Europe/Stockholm
+    networks:
+      - zwave
+    devices:
+      - '/dev/zwave:/dev/zwave'
+    volumes:
+      - /opt/z-wave-js/:/usr/src/app/store
+    ports:
+      - "8091:8091" # port for web interface
+      - "3000:3000" # port for Z-Wave JS websocket server
+networks:
+  zwave:
+secrets:
+  zwavejs_secret:
+    file: secrets/zwavej2mqtt.txt
+---
+version: '3'
+services:
+  telldus:
+    container_name: telldus
+    image: henkir/telldusd
+    volumes:
+      - ./tellstick.conf:/etc/tellstick.conf
+    ports:
+      - "50800:50800"
+      - "50801:50801"
+    devices:
+      - /dev/bus/usb
+    restart: always
+---
+version: '3'
+services:
+  postgres:
+    container_name: postgres
+    image: postgres:16.0-alpine
+    restart: always
+    ports:
+      - "5234:5432"
+    environment:
+      POSTGRES_USER: /run/secrets/postgres_user_secret
+      POSTGRES_PASSWORD: /run/secrets/postgres_password_secret
+    volumes:
+      - /home/henkeadm/.postgres:/var/lib/postgresql/data
+      - /etc/localtime:/etc/localtime:ro
+secrets:
+  postgres_user_secret:
+    file: secrets/postgres_user.txt
+  postgres_password_secret:
+    file: secrets/postgres_password.txt
